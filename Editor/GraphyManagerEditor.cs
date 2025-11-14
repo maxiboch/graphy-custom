@@ -148,6 +148,12 @@ namespace Tayx.Graphy
         private SerializedProperty m_fmodGraphResolution;
 
         private SerializedProperty m_fmodTextUpdateRate;
+        
+        private SerializedProperty m_fmodEnableSpectrum;
+        
+        private SerializedProperty m_fmodSpectrumSize;
+        
+        private SerializedProperty m_fmodSpectrumColor;
 
 #endif // GRAPHY_FMOD
         #endregion
@@ -791,7 +797,7 @@ namespace Tayx.Graphy
             m_audioModuleInspectorToggle = EditorGUILayout.Foldout
             (
                 m_audioModuleInspectorToggle,
-                content: " [ AUDIO ]",
+                content: " [ AUDIO (Built-in) ]",
                 style: GraphyEditorStyle.FoldoutStyle,
                 toggleOnLabelClick: true
             );
@@ -811,28 +817,32 @@ namespace Tayx.Graphy
                 );
 
                 GUILayout.Space( 5 );
-
-                EditorGUILayout.PropertyField
-                (
-                    m_findAudioListenerInCameraIfNull,
-                    new GUIContent
+                
+                // Only show audio settings if module is not OFF
+                if( m_audioModuleState.intValue != 2 )
+                {
+                    EditorGUILayout.PropertyField
                     (
-                        text: "Find audio listener",
-                        tooltip:
-                        "Tries to find the AudioListener in the Main camera in the scene. (if AudioListener is null)"
-                    )
-                );
+                        m_findAudioListenerInCameraIfNull,
+                        new GUIContent
+                        (
+                            text: "Find audio listener",
+                            tooltip:
+                            "Tries to find the AudioListener in the Main camera in the scene. (if AudioListener is null)"
+                        )
+                    );
 
-                EditorGUILayout.PropertyField
-                (
-                    m_audioListener,
-                    new GUIContent
+                    EditorGUILayout.PropertyField
                     (
-                        text: "Audio Listener",
-                        tooltip:
-                        "Graphy will take the data from this Listener. If none are specified, it will try to get it from the Main Camera in the scene."
-                    )
-                );
+                        m_audioListener,
+                        new GUIContent
+                        (
+                            text: "Audio Listener",
+                            tooltip:
+                            "Graphy will take the data from this Listener. If none are specified, it will try to get it from the Main Camera in the scene."
+                        )
+                    );
+                }
 
                 if( m_audioModuleState.intValue == 0 )
                 {
@@ -861,61 +871,80 @@ namespace Tayx.Graphy
                     }
                     //TODO: Figure out why a static version of the ForceMultipleOf3 isnt used.
                 }
-
-                EditorGUILayout.PropertyField
-                (
-                    m_FFTWindow,
-                    new GUIContent
-                    (
-                        text: "FFT Window",
-                        tooltip:
-                        "Used to reduce leakage between frequency bins/bands. Note, the more complex window type, the better the quality, but reduced speed. \n\nSimplest is rectangular. Most complex is BlackmanHarris"
-                    )
-                );
-
-                m_spectrumSize.intValue = EditorGUILayout.IntSlider
-                (
-                    new GUIContent
-                    (
-                        text: "Spectrum size",
-                        tooltip:
-                        "Has to be a power of 2 between 128-8192. The higher sample rate, the less precision but also more impact on performance. Careful with mobile devices"
-                    ),
-                    m_spectrumSize.intValue,
-                    leftValue: 128,
-                    rightValue: 8192
-                );
-
-                int closestSpectrumIndex = 0;
-                int minDistanceToSpectrumValue = 100000;
-
-                for( int i = 0; i < m_spectrumSizeValues.Length; i++ )
+                
+                // Only show FFT settings if module is not OFF
+                if( m_audioModuleState.intValue != 2 )
                 {
-                    int newDistance = Mathf.Abs
+                    EditorGUILayout.PropertyField
                     (
-                        value: m_spectrumSize.intValue - m_spectrumSizeValues[ i ]
+                        m_FFTWindow,
+                        new GUIContent
+                        (
+                            text: "FFT Window",
+                            tooltip:
+                            "Used to reduce leakage between frequency bins/bands. Note, the more complex window type, the better the quality, but reduced speed. \n\nSimplest is rectangular. Most complex is BlackmanHarris"
+                        )
                     );
 
-                    if( newDistance < minDistanceToSpectrumValue )
-                    {
-                        minDistanceToSpectrumValue = newDistance;
-                        closestSpectrumIndex = i;
-                    }
-                }
-
-                m_spectrumSize.intValue = m_spectrumSizeValues[ closestSpectrumIndex ];
-
-                m_audioTextUpdateRate.intValue = EditorGUILayout.IntSlider
-                (
-                    new GUIContent
+                    m_spectrumSize.intValue = EditorGUILayout.IntSlider
                     (
-                        text: "Text update rate",
-                        tooltip: "Defines the amount times the text is updated in 1 second"
-                    ),
-                    m_audioTextUpdateRate.intValue,
-                    leftValue: 1,
-                    rightValue: 60
-                );
+                        new GUIContent
+                        (
+                            text: "Spectrum size",
+                            tooltip:
+                            "Has to be a power of 2 between 128-8192. The higher sample rate, the less precision but also more impact on performance. Careful with mobile devices"
+                        ),
+                        m_spectrumSize.intValue,
+                        leftValue: 128,
+                        rightValue: 8192
+                    );
+
+                    int closestSpectrumIndex = 0;
+                    int minDistanceToSpectrumValue = 100000;
+
+                    for( int i = 0; i < m_spectrumSizeValues.Length; i++ )
+                    {
+                        int newDistance = Mathf.Abs
+                        (
+                            value: m_spectrumSize.intValue - m_spectrumSizeValues[ i ]
+                        );
+
+                        if( newDistance < minDistanceToSpectrumValue )
+                        {
+                            minDistanceToSpectrumValue = newDistance;
+                            closestSpectrumIndex = i;
+                        }
+                    }
+
+                    m_spectrumSize.intValue = m_spectrumSizeValues[ closestSpectrumIndex ];
+                    
+                    m_audioTextUpdateRate.intValue = EditorGUILayout.IntSlider
+                    (
+                        new GUIContent
+                        (
+                            text: "Text update rate",
+                            tooltip: "Defines the amount times the text is updated in 1 second"
+                        ),
+                        m_audioTextUpdateRate.intValue,
+                        leftValue: 1,
+                        rightValue: 60
+                    );
+                }
+                else
+                {
+                    // Module is OFF, still show update rate for when it's re-enabled
+                    m_audioTextUpdateRate.intValue = EditorGUILayout.IntSlider
+                    (
+                        new GUIContent
+                        (
+                            text: "Text update rate",
+                            tooltip: "Defines the amount times the text is updated in 1 second"
+                        ),
+                        m_audioTextUpdateRate.intValue,
+                        leftValue: 1,
+                        rightValue: 60
+                    );
+                }
             }
 
 #endif // GRAPHY_BUILTIN_AUDIO
@@ -928,7 +957,7 @@ namespace Tayx.Graphy
             m_fmodModuleInspectorToggle = EditorGUILayout.Foldout
             (
                 m_fmodModuleInspectorToggle,
-                content: " [ FMOD ]",
+                content: " [ AUDIO (FMOD) ]",
                 style: GraphyEditorStyle.FoldoutStyle,
                 toggleOnLabelClick: true
             );
@@ -948,35 +977,90 @@ namespace Tayx.Graphy
                 );
 
                 GUILayout.Space( 5 );
-
-                if( m_fmodModuleState.intValue == 0 )
+                
+                // Only show settings if module is not OFF  
+                if( m_fmodModuleState.intValue != 2 ) // Not OFF
                 {
-                    m_fmodGraphResolution.intValue = EditorGUILayout.IntSlider
+                    if( m_fmodModuleState.intValue == 0 ) // FULL mode - show graph settings
+                    {
+                        m_fmodGraphResolution.intValue = EditorGUILayout.IntSlider
+                        (
+                            new GUIContent
+                            (
+                                text: "Graph resolution",
+                                tooltip: "Defines the amount of points in the FMOD graphs"
+                            ),
+                            m_fmodGraphResolution.intValue,
+                            leftValue: 20,
+                            rightValue: m_graphyMode.intValue == 0 ? 300 : 128
+                        );
+                        
+                        // FFT Spectrum settings
+                        GUILayout.Space( 10 );
+                        EditorGUILayout.LabelField( "FFT Spectrum Analysis:", EditorStyles.boldLabel );
+                        
+                        EditorGUI.indentLevel++;
+                        
+                        bool enableSpectrum = EditorGUILayout.Toggle
+                        (
+                            new GUIContent
+                            (
+                                text: "Enable FFT Spectrum",
+                                tooltip: "Enables FFT spectrum analysis for frequency visualization"
+                            ),
+                            false // TODO: Add actual property when added to GraphyManager
+                        );
+                        
+                        if( enableSpectrum )
+                        {
+                            int spectrumSize = EditorGUILayout.IntSlider
+                            (
+                                new GUIContent
+                                (
+                                    text: "FFT Size",
+                                    tooltip: "FFT window size. Higher values = better frequency resolution but more CPU usage. Must be power of 2."
+                                ),
+                                512,
+                                leftValue: 128,
+                                rightValue: 8192
+                            );
+                            
+                            // Force power of 2
+                            int closestPowerOf2 = 128;
+                            for( int i = 128; i <= 8192; i *= 2 )
+                            {
+                                if( Mathf.Abs(spectrumSize - i) < Mathf.Abs(spectrumSize - closestPowerOf2) )
+                                {
+                                    closestPowerOf2 = i;
+                                }
+                            }
+                            
+                            EditorGUILayout.HelpBox($"FFT spectrum analysis provides frequency data for audio visualization. Size will be: {closestPowerOf2}", MessageType.Info);
+                        }
+                        
+                        EditorGUI.indentLevel--;
+                    }
+
+                    m_fmodTextUpdateRate.intValue = EditorGUILayout.IntSlider
                     (
                         new GUIContent
                         (
-                            text: "Graph resolution",
-                            tooltip: "Defines the amount of points in the FMOD graphs"
+                            text: "Text update rate",
+                            tooltip: "Defines how many times the text is updated per second."
                         ),
-                        m_fmodGraphResolution.intValue,
-                        leftValue: 20,
-                        rightValue: m_graphyMode.intValue == 0 ? 300 : 128
+                        m_fmodTextUpdateRate.intValue,
+                        leftValue: 1,
+                        rightValue: 60
                     );
+                    
+                    GUILayout.Space( 5 );
+                    EditorGUILayout.HelpBox("FMOD monitoring will automatically detect your FMOD implementation. Displays CPU, Memory, Channels, File I/O, audio levels, and optional FFT spectrum.", MessageType.Info);
                 }
-
-                m_fmodTextUpdateRate.intValue = EditorGUILayout.IntSlider
-                (
-                    new GUIContent
-                    (
-                        text: "Text update rate",
-                        tooltip: "Defines how many times the text is updated per second."
-                    ),
-                    m_fmodTextUpdateRate.intValue,
-                    leftValue: 1,
-                    rightValue: 60
-                );
-                
-                EditorGUILayout.HelpBox("FMOD monitoring will automatically detect your FMOD implementation. Displays CPU, Memory, Channels, File I/O and audio levels.", MessageType.Info);
+                else
+                {
+                    // Module is OFF - just show info
+                    EditorGUILayout.HelpBox("FMOD monitoring is disabled. Enable to track FMOD performance metrics.", MessageType.Info);
+                }
             }
 #endif // GRAPHY_FMOD
             #endregion

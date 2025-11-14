@@ -64,6 +64,14 @@ namespace Tayx.Graphy.Fmod
         private G_DoubleEndedQueue m_rightPeakSamples;
         private float m_leftRmsSum = 0f;
         private float m_rightRmsSum = 0f;
+        
+        // FFT Spectrum analysis
+        private IntPtr m_fftDsp = IntPtr.Zero;
+        private int m_spectrumSize = 512;  // Default spectrum size
+        private float[] m_spectrumData = null;
+        private FMOD.DSP_PARAMETER_FFT m_fftParameter;
+        private IntPtr m_unmanagedSpectrum = IntPtr.Zero;
+        private bool m_fftEnabled = false;
 
         #endregion
 
@@ -94,6 +102,40 @@ namespace Tayx.Graphy.Fmod
         public float CurrentRightPeak { get; private set; } = 0f;
         public float AverageLeftRMS { get; private set; } = 0f;
         public float AverageRightRMS { get; private set; } = 0f;
+        
+        // FFT Spectrum properties
+        public float[] SpectrumData => m_spectrumData;
+        public int SpectrumSize 
+        { 
+            get => m_spectrumSize;
+            set
+            {
+                if (value != m_spectrumSize && IsPowerOfTwo(value))
+                {
+                    m_spectrumSize = value;
+                    SetupFFT();
+                }
+            }
+        }
+        public bool FFTEnabled 
+        { 
+            get => m_fftEnabled;
+            set
+            {
+                if (value != m_fftEnabled)
+                {
+                    m_fftEnabled = value;
+                    if (m_fftEnabled)
+                    {
+                        SetupFFT();
+                    }
+                    else
+                    {
+                        CleanupFFT();
+                    }
+                }
+            }
+        }
 
         public bool IsAvailable => m_isInitialized && m_fmodSystem != IntPtr.Zero;
 
@@ -415,6 +457,9 @@ namespace Tayx.Graphy.Fmod
                         }
                     }
                 }
+                
+                // Update FFT spectrum if enabled
+                UpdateFFTSpectrum();
             }
             catch (Exception e)
             {
@@ -446,6 +491,133 @@ namespace Tayx.Graphy.Fmod
             float db = 20f * Mathf.Log10(linear);
             return Mathf.Max(db, -80f);
         }
+        
+        private bool IsPowerOfTwo(int value)
+        {
+            return value > 0 && (value & (value - 1)) == 0;
+        }
+        
+        private void SetupFFT()
+        {
+            if (!m_isInitialized || m_fmodSystem == IntPtr.Zero || !m_fftEnabled) return;
+            
+            try
+            {
+                CleanupFFT();
+                
+                FMOD.System system = new FMOD.System(m_fmodSystem);
+                
+                // Create FFT DSP
+                FMOD.RESULT result = system.createDSPByType(FMOD.DSP_TYPE.FFT, out m_fftDsp);
+                if (result == FMOD.RESULT.OK && m_fftDsp != IntPtr.Zero)
+                {
+                    FMOD.DSP fftDsp = new FMOD.DSP(m_fftDsp);
+                    
+                    // Set window size (spectrum size)
+                    result = fftDsp.setParameterInt((int)FMOD.DSP_FFT.WINDOWSIZE, m_spectrumSize);
+                    if (result != FMOD.RESULT.OK)
+                    {
+                        Debug.LogWarning($"[Graphy] Failed to set FFT window size: {result}");
+                    }
+                    
+                    // Set window type (default to Blackman for good frequency resolution)
+                    result = fftDsp.setParameterInt((int)FMOD.DSP_FFT.WINDOWTYPE, (int)FMOD.DSP_FFT_WINDOW.BLACKMAN);
+                    
+                    // Add DSP to master channel group
+                    if (m_masterChannelGroup != IntPtr.Zero)
+                    {
+                        FMOD.ChannelGroup masterGroup = new FMOD.ChannelGroup(m_masterChannelGroup);
+                        result = masterGroup.addDSP(0, m_fftDsp);
+                        if (result == FMOD.RESULT.OK)
+                        {
+                            // Allocate spectrum data array
+                            m_spectrumData = new float[m_spectrumSize / 2]; // Only need half due to Nyquist
+                            Debug.Log($"[Graphy] FFT DSP setup complete with size {m_spectrumSize}");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[Graphy] Failed to add FFT DSP to master channel group: {result}");
+                            CleanupFFT();
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[Graphy] Failed to create FFT DSP: {result}");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Graphy] Error setting up FFT: {e.Message}");
+                CleanupFFT();
+            }
+        }
+        
+        private void CleanupFFT()
+        {
+            if (m_fftDsp != IntPtr.Zero)
+            {
+                try
+                {
+                    FMOD.DSP fftDsp = new FMOD.DSP(m_fftDsp);
+                    fftDsp.release();
+                }
+                catch { }
+                m_fftDsp = IntPtr.Zero;
+            }
+            
+            if (m_unmanagedSpectrum != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(m_unmanagedSpectrum);
+                m_unmanagedSpectrum = IntPtr.Zero;
+            }
+            
+            m_spectrumData = null;
+        }
+        
+        private void UpdateFFTSpectrum()
+        {
+            if (!m_fftEnabled || m_fftDsp == IntPtr.Zero || m_spectrumData == null) return;
+            
+            try
+            {
+                FMOD.DSP fftDsp = new FMOD.DSP(m_fftDsp);
+                
+                // Get FFT spectrum data
+                IntPtr unmanagedData;
+                int length;
+                FMOD.RESULT result = fftDsp.getParameterData((int)FMOD.DSP_FFT.SPECTRUMDATA, out unmanagedData, out length);
+                
+                if (result == FMOD.RESULT.OK && unmanagedData != IntPtr.Zero)
+                {
+                    // Marshal the FFT data
+                    FMOD.DSP_PARAMETER_FFT fftData = (FMOD.DSP_PARAMETER_FFT)Marshal.PtrToStructure(unmanagedData, typeof(FMOD.DSP_PARAMETER_FFT));
+                    
+                    if (fftData.spectrum != IntPtr.Zero && fftData.numChannels > 0)
+                    {
+                        // Copy spectrum data for first channel (or average channels)
+                        int spectrumLength = fftData.length / 2; // Only positive frequencies
+                        
+                        if (spectrumLength > 0 && spectrumLength <= m_spectrumData.Length)
+                        {
+                            // Get spectrum for first channel
+                            IntPtr channelSpectrum = fftData.spectrum;
+                            Marshal.Copy(channelSpectrum, m_spectrumData, 0, spectrumLength);
+                            
+                            // Convert to dB if needed
+                            for (int i = 0; i < spectrumLength; i++)
+                            {
+                                m_spectrumData[i] = LinearToDecibels(m_spectrumData[i]);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Graphy] Error updating FFT spectrum: {e.Message}");
+            }
+        }
 
         #endregion
     }
@@ -461,6 +633,30 @@ namespace Tayx.Graphy.Fmod
             OK = 0,
             ERR_BADCOMMAND = 1,
             // Add other error codes as needed
+        }
+        
+        public enum DSP_TYPE
+        {
+            FFT = 24,
+            // Add other DSP types as needed
+        }
+        
+        public enum DSP_FFT
+        {
+            WINDOWSIZE = 0,
+            WINDOWTYPE = 1,
+            SPECTRUMDATA = 2,
+            DOMINANT_FREQ = 3
+        }
+        
+        public enum DSP_FFT_WINDOW
+        {
+            RECT = 0,
+            TRIANGLE = 1,
+            HAMMING = 2,
+            HANNING = 3,
+            BLACKMAN = 4,
+            BLACKMANHARRIS = 5
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -480,6 +676,14 @@ namespace Tayx.Graphy.Fmod
             public IntPtr peaklevel;
             public IntPtr rmslevel;
             public int numChannels;
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DSP_PARAMETER_FFT
+        {
+            public int length;
+            public int numChannels;
+            public IntPtr spectrum;  // Array of float arrays, one per channel
         }
 
         public struct System
@@ -538,6 +742,14 @@ namespace Tayx.Graphy.Fmod
                 channelgroup = new ChannelGroup(groupHandle);
                 return result;
             }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_System_CreateDSPByType(IntPtr system, DSP_TYPE type, out IntPtr dsp);
+            
+            public RESULT createDSPByType(DSP_TYPE type, out IntPtr dsp)
+            {
+                return FMOD_System_CreateDSPByType(handle, type, out dsp);
+            }
         }
         
         public struct ChannelGroup
@@ -563,6 +775,48 @@ namespace Tayx.Graphy.Fmod
             public RESULT getMeteringInfo(out DSP_METERING_INFO outputInfo)
             {
                 return FMOD_ChannelGroup_GetMeteringInfo(handle, IntPtr.Zero, out outputInfo);
+            }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_ChannelGroup_AddDSP(IntPtr channelgroup, int index, IntPtr dsp);
+            
+            public RESULT addDSP(int index, IntPtr dsp)
+            {
+                return FMOD_ChannelGroup_AddDSP(handle, index, dsp);
+            }
+        }
+        
+        public struct DSP
+        {
+            public IntPtr handle;
+            
+            public DSP(IntPtr ptr)
+            {
+                handle = ptr;
+            }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_DSP_SetParameterInt(IntPtr dsp, int index, int value);
+            
+            public RESULT setParameterInt(int index, int value)
+            {
+                return FMOD_DSP_SetParameterInt(handle, index, value);
+            }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_DSP_GetParameterData(IntPtr dsp, int index, out IntPtr data, out int length);
+            
+            public RESULT getParameterData(int index, out IntPtr data, out int length)
+            {
+                return FMOD_DSP_GetParameterData(handle, index, out data, out length);
+            }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_DSP_Release(IntPtr dsp);
+            
+            public RESULT release()
+            {
+                return FMOD_DSP_Release(handle);
             }
         }
 
