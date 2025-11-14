@@ -126,6 +126,20 @@ namespace Tayx.Graphy
 #endif // GRAPHY_BUILTIN_AUDIO
         #endregion
 
+        #region Section -> FMOD
+#if GRAPHY_FMOD
+
+        private bool m_fmodModuleInspectorToggle = true;
+
+        private SerializedProperty m_fmodModuleState;
+
+        private SerializedProperty m_fmodGraphResolution;
+
+        private SerializedProperty m_fmodTextUpdateRate;
+
+#endif // GRAPHY_FMOD
+        #endregion
+
         #region Section -> Advanced Settings
 
         private bool m_advancedModuleInspectorToggle = true;
@@ -234,6 +248,18 @@ namespace Tayx.Graphy
             m_spectrumSize = serObj.FindProperty( "m_spectrumSize" );
 
 #endif // GRAPHY_BUILTIN_AUDIO
+            #endregion
+
+            #region Section -> FMOD
+#if GRAPHY_FMOD
+
+            m_fmodModuleState = serObj.FindProperty( "m_fmodModuleState" );
+
+            m_fmodGraphResolution = serObj.FindProperty( "m_fmodGraphResolution" );
+
+            m_fmodTextUpdateRate = serObj.FindProperty( "m_fmodTextUpdateRate" );
+
+#endif // GRAPHY_FMOD
             #endregion
 
             #region Section -> Advanced Settings
@@ -871,6 +897,66 @@ namespace Tayx.Graphy
             }
 
 #endif // GRAPHY_BUILTIN_AUDIO
+            #endregion
+
+            #region Section -> FMOD
+#if GRAPHY_FMOD
+            GUILayout.Space( 20 );
+
+            m_fmodModuleInspectorToggle = EditorGUILayout.Foldout
+            (
+                m_fmodModuleInspectorToggle,
+                content: " [ FMOD ]",
+                style: GraphyEditorStyle.FoldoutStyle,
+                toggleOnLabelClick: true
+            );
+
+            GUILayout.Space( 5 );
+
+            if( m_fmodModuleInspectorToggle )
+            {
+                EditorGUILayout.PropertyField
+                (
+                    m_fmodModuleState,
+                    new GUIContent
+                    (
+                        text: "Module state",
+                        tooltip: "FULL -> Text + Graph \nTEXT -> Just text \nOFF -> Turned off"
+                    )
+                );
+
+                GUILayout.Space( 5 );
+
+                if( m_fmodModuleState.intValue == 0 )
+                {
+                    m_fmodGraphResolution.intValue = EditorGUILayout.IntSlider
+                    (
+                        new GUIContent
+                        (
+                            text: "Graph resolution",
+                            tooltip: "Defines the amount of points in the FMOD graphs"
+                        ),
+                        m_fmodGraphResolution.intValue,
+                        leftValue: 20,
+                        rightValue: m_graphyMode.intValue == 0 ? 300 : 128
+                    );
+                }
+
+                m_fmodTextUpdateRate.intValue = EditorGUILayout.IntSlider
+                (
+                    new GUIContent
+                    (
+                        text: "Text update rate",
+                        tooltip: "Defines how many times the text is updated per second."
+                    ),
+                    m_fmodTextUpdateRate.intValue,
+                    leftValue: 1,
+                    rightValue: 60
+                );
+                
+                EditorGUILayout.HelpBox("FMOD monitoring will automatically detect your FMOD implementation. Displays CPU, Memory, Channels, File I/O and audio levels.", MessageType.Info);
+            }
+#endif // GRAPHY_FMOD
             #endregion
 
             GUILayout.Space( 20 );
