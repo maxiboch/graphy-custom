@@ -1,8 +1,8 @@
 /* ---------------------------------------
- * Author:          Custom Graphy Fork Contributors
+ * Author:          Maxi Boch (@maxiboch)
  * Contributors:    https://github.com/Tayx94/graphy/graphs/contributors
  * Project:         Graphy - Ultimate Stats Monitor
- * Date:            14-Nov-2025
+ * Date:            14-Nov-2024
  * Studio:          Tayx
  *
  * Git repo:        https://github.com/Tayx94/graphy

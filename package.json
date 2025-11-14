@@ -1,8 +1,8 @@
 {
-    "name": "com.tayx.graphy.custom",
-    "version": "3.0.5-custom.3",
-    "displayName": "Graphy Custom - Enhanced Performance Monitor",
-    "description": "maxiboch's Custom Graphy fork with integrated PRs #121-124, CPU/GPU tracking, ms/f display, and double-ended queue optimizations.",
+    "name": "com.tayx.graphy.fmod",
+    "version": "3.0.6",
+    "displayName": "Graphy w/FMOD - Enhanced Performance Monitor",
+    "description": "maxiboch's Custom for of Graphy fork with FMOD support and other improvements",
     "unity": "2019.4",
     "license": "MIT",
     "keywords": [
@@ -10,11 +10,12 @@
         "counter",
         "performance",
         "debugger",
-        "graphy"
+        "graphy",
+        "fmod"
     ],
     "author": {
-	    "name": "Martin Pane",
-	    "email": "martintayx@gmail.com",
-	    "url": "https://twitter.com/martinTayx"
+	    "name": "Maxi Boch",
+	    "email": "maxiboch@gmail.com",
+	    "url": "https://twitter.com/maxiboch"
   	}
 }

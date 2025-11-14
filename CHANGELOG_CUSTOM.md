@@ -3,6 +3,7 @@
 ## [v0.3.0-custom] - 2025-11-14
 
 ### Enhanced FMOD Integration
+**Author: Maxi Boch (@maxiboch)**
 - **Compile Directive Support**
   - Added `GRAPHY_FMOD` compile directive to assembly definitions
   - Module only compiles when FMOD for Unity is present
@@ -34,7 +35,7 @@
 ## [v0.2.0-custom] - 2025-11-14
 
 ### Added
-- **FMOD Audio System Monitoring Module**
+- **FMOD Audio System Monitoring Module** (Author: Maxi Boch)
   - Real-time FMOD CPU usage tracking (DSP, streaming, geometry, update, Studio)
   - Memory allocation monitoring with current and peak values
   - Active audio channels counter

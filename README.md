@@ -55,6 +55,7 @@ This fork wouldn't exist without the contributions from:
 - **[Paul Sinnett](https://github.com/paulsinnett)** - Double-ended queue implementation, reset functionality, bug fixes
 - **[paulatwarp](https://github.com/paulatwarp)** - CPU/GPU tracking and ms/f display
 - **[FurkanKambay](https://github.com/FurkanKambay)** - Conditional audio module
+- **[Maxi Boch](https://github.com/maxiboch)** - FMOD monitoring module, audio level metering, integration enhancements
 - All other [Graphy contributors](https://github.com/Tayx94/graphy/graphs/contributors)
 
 [![openupm](https://img.shields.io/npm/v/com.tayx.graphy?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.tayx.graphy/)
