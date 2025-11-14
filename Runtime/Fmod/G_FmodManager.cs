@@ -71,15 +71,15 @@ namespace Tayx.Graphy.Fmod
 
         #region Methods -> Public
 
-        public void SetPosition(GraphyManager.ModulePosition newModulePosition)
+        public void SetPosition(GraphyManager.ModulePosition newModulePosition, Vector2 offset)
         {
             if (m_rectTransform == null || m_graphyManager == null)
             {
                 return;
             }
 
-            float xSideOffset = Mathf.Abs(m_rectTransform.anchoredPosition.x);
-            float ySideOffset = Mathf.Abs(m_rectTransform.anchoredPosition.y);
+            float xSideOffset = Mathf.Abs(m_rectTransform.anchoredPosition.x) + offset.x;
+            float ySideOffset = Mathf.Abs(m_rectTransform.anchoredPosition.y) + offset.y;
 
             switch (newModulePosition)
             {
@@ -108,6 +108,7 @@ namespace Tayx.Graphy.Fmod
                     break;
 
                 case GraphyManager.ModulePosition.FREE:
+                    m_rectTransform.anchoredPosition = offset;
                     break;
             }
         }
