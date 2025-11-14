@@ -2,7 +2,7 @@
     "name": "com.tayx.graphy.fmod",
     "version": "3.0.6",
     "displayName": "Graphy w/FMOD - Enhanced Performance Monitor",
-    "description": "maxiboch's Custom for of Graphy fork with FMOD support and other improvements",
+    "description": "Maxi Boch's custom fork of Martin Pane's Graphy with FMOD audio system monitoring, CPU/GPU tracking, and performance improvements",
     "unity": "2019.4",
     "license": "MIT",
     "keywords": [
@@ -17,5 +17,11 @@
 	    "name": "Maxi Boch",
 	    "email": "maxiboch@gmail.com",
 	    "url": "https://twitter.com/maxiboch"
-  	}
+  	},
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/maxiboch/graphy-custom.git"
+    },
+    "documentationUrl": "https://github.com/maxiboch/graphy-custom/blob/main/README.md",
+    "changelogUrl": "https://github.com/maxiboch/graphy-custom/blob/main/CHANGELOG_CUSTOM.md"
 }
