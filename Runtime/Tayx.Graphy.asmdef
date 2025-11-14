@@ -10,6 +10,9 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
+    "defines": [
+        "GRAPHY_FMOD"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.inputsystem",

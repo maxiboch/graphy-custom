@@ -101,7 +101,11 @@ namespace Tayx.Graphy.Fmod
         {
             if (m_graphyManager != null)
             {
+#if GRAPHY_FMOD
                 m_updateRate = m_graphyManager.FmodTextUpdateRate;
+#else
+                m_updateRate = 1f / 3f; // Default 3 updates per second
+#endif
                 
                 // Get colors from GraphyManager if available
                 m_goodColor = m_graphyManager.GoodFPSColor;

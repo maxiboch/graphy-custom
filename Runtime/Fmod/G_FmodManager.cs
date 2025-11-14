@@ -188,7 +188,11 @@ namespace Tayx.Graphy.Fmod
                 m_fmodText.UpdateParameters();
             }
 
+#if GRAPHY_FMOD
             SetState(m_graphyManager.FmodModuleState, true);
+#else
+            SetState(GraphyManager.ModuleState.FULL, true);
+#endif
         }
 
         public void RefreshParameters()

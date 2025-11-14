@@ -79,7 +79,11 @@ namespace Tayx.Graphy.Fmod
         {
             if (m_graphyManager != null)
             {
+#if GRAPHY_FMOD
                 m_resolution = m_graphyManager.FmodGraphResolution;
+#else
+                m_resolution = 150; // Default resolution
+#endif
 
                 CreatePoints();
                 UpdateGraph();
