@@ -11,6 +11,8 @@
  * Attribution is not required, but it is always welcomed!
  * -------------------------------------*/
 
+#if GRAPHY_FMOD || UNITY_EDITOR
+
 using UnityEngine;
 using UnityEngine.UI;
 using Tayx.Graphy.Utils.NumString;
@@ -232,3 +234,5 @@ namespace Tayx.Graphy.Fmod
         #endregion
     }
 }
+
+#endif // GRAPHY_FMOD || UNITY_EDITOR

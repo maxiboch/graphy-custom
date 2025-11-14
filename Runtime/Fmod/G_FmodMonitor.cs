@@ -11,6 +11,8 @@
  * Attribution is not required, but it is always welcomed!
  * -------------------------------------*/
 
+#if GRAPHY_FMOD || UNITY_EDITOR
+
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -26,6 +28,7 @@ namespace Tayx.Graphy.Fmod
 
         // FMOD System reference - we'll get this dynamically
         private IntPtr m_fmodSystem = IntPtr.Zero;
+        private IntPtr m_masterChannelGroup = IntPtr.Zero;
         private bool m_isInitialized = false;
 
         // Pre-allocated buffers for GC-free operation
@@ -50,6 +53,17 @@ namespace Tayx.Graphy.Fmod
         private FMOD.CPU_USAGE m_cpuUsage;
         private int m_currentAllocated;
         private int m_maxAllocated;
+        
+        // Audio metering
+        private FMOD.DSP_METERING_INFO m_meteringInfo;
+        private float[] m_rmsLevels = new float[32]; // Max 32 channels
+        private float[] m_peakLevels = new float[32];
+        private G_DoubleEndedQueue m_leftRmsSamples;
+        private G_DoubleEndedQueue m_rightRmsSamples;
+        private G_DoubleEndedQueue m_leftPeakSamples;
+        private G_DoubleEndedQueue m_rightPeakSamples;
+        private float m_leftRmsSum = 0f;
+        private float m_rightRmsSum = 0f;
 
         #endregion
 
@@ -72,6 +86,14 @@ namespace Tayx.Graphy.Fmod
         public float PeakFmodMemoryMB { get; private set; } = 0f;
         public int PeakChannelsPlaying { get; private set; } = 0;
         public float PeakFileUsageKBps { get; private set; } = 0f;
+
+        // Audio level properties
+        public float CurrentLeftRMS { get; private set; } = 0f;
+        public float CurrentRightRMS { get; private set; } = 0f;
+        public float CurrentLeftPeak { get; private set; } = 0f;
+        public float CurrentRightPeak { get; private set; } = 0f;
+        public float AverageLeftRMS { get; private set; } = 0f;
+        public float AverageRightRMS { get; private set; } = 0f;
 
         public bool IsAvailable => m_isInitialized && m_fmodSystem != IntPtr.Zero;
 
@@ -163,6 +185,12 @@ namespace Tayx.Graphy.Fmod
             m_memorySamples = new G_DoubleEndedQueue(m_samplesCapacity);
             m_channelsSamples = new G_DoubleEndedQueue(m_samplesCapacity);
             m_fileUsageSamples = new G_DoubleEndedQueue(m_samplesCapacity);
+            
+            // Initialize audio level buffers
+            m_leftRmsSamples = new G_DoubleEndedQueue(m_samplesCapacity);
+            m_rightRmsSamples = new G_DoubleEndedQueue(m_samplesCapacity);
+            m_leftPeakSamples = new G_DoubleEndedQueue(m_samplesCapacity);
+            m_rightPeakSamples = new G_DoubleEndedQueue(m_samplesCapacity);
 
             TryInitializeFmod();
         }
@@ -183,6 +211,21 @@ namespace Tayx.Graphy.Fmod
                     if (result == FMOD.RESULT.OK && coreSystem.hasHandle())
                     {
                         m_fmodSystem = coreSystem.handle;
+                        
+                        // Get master channel group for audio metering
+                        FMOD.ChannelGroup masterGroup;
+                        result = coreSystem.getMasterChannelGroup(out masterGroup);
+                        if (result == FMOD.RESULT.OK)
+                        {
+                            m_masterChannelGroup = masterGroup.handle;
+                        }
+                        
+                        // Enable metering on the master channel group
+                        if (m_masterChannelGroup != IntPtr.Zero)
+                        {
+                            masterGroup.setMeteringEnabled(true, true);
+                        }
+                        
                         m_isInitialized = true;
                         Debug.Log("[Graphy] FMOD monitoring initialized successfully");
                     }
@@ -251,6 +294,47 @@ namespace Tayx.Graphy.Fmod
                     // Reset the file usage counters after reading
                     system.resetFileUsage();
                 }
+
+                // Get audio metering info
+                if (m_masterChannelGroup != IntPtr.Zero)
+                {
+                    FMOD.ChannelGroup masterGroup = new FMOD.ChannelGroup(m_masterChannelGroup);
+                    result = masterGroup.getMeteringInfo(out m_meteringInfo);
+                    if (result == FMOD.RESULT.OK && m_meteringInfo.numChannels > 0)
+                    {
+                        // Get RMS and peak levels
+                        int numChannels = Math.Min(m_meteringInfo.numChannels, 32);
+                        
+                        // Copy levels from unmanaged memory
+                        if (m_meteringInfo.rmslevel != IntPtr.Zero)
+                        {
+                            Marshal.Copy(m_meteringInfo.rmslevel, m_rmsLevels, 0, numChannels);
+                        }
+                        if (m_meteringInfo.peaklevel != IntPtr.Zero)
+                        {
+                            Marshal.Copy(m_meteringInfo.peaklevel, m_peakLevels, 0, numChannels);
+                        }
+                        
+                        // For stereo, track left and right channels
+                        if (numChannels >= 2)
+                        {
+                            CurrentLeftRMS = LinearToDecibels(m_rmsLevels[0]);
+                            CurrentRightRMS = LinearToDecibels(m_rmsLevels[1]);
+                            CurrentLeftPeak = LinearToDecibels(m_peakLevels[0]);
+                            CurrentRightPeak = LinearToDecibels(m_peakLevels[1]);
+                            
+                            // Update averages
+                            UpdateStatistic(m_leftRmsSamples, CurrentLeftRMS, ref m_leftRmsSum, out AverageLeftRMS);
+                            UpdateStatistic(m_rightRmsSamples, CurrentRightRMS, ref m_rightRmsSum, out AverageRightRMS);
+                        }
+                        else if (numChannels == 1)
+                        {
+                            // Mono - use same value for both channels
+                            CurrentLeftRMS = CurrentRightRMS = LinearToDecibels(m_rmsLevels[0]);
+                            CurrentLeftPeak = CurrentRightPeak = LinearToDecibels(m_peakLevels[0]);
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -274,6 +358,13 @@ namespace Tayx.Graphy.Fmod
             sum += newValue;
 
             average = samples.Count > 0 ? sum / samples.Count : 0f;
+        }
+        
+        private float LinearToDecibels(float linear)
+        {
+            if (linear <= 0f) return -80f;
+            float db = 20f * Mathf.Log10(linear);
+            return Mathf.Max(db, -80f);
         }
 
         #endregion
@@ -300,6 +391,15 @@ namespace Tayx.Graphy.Fmod
             public float geometry;
             public float update;
             public float studio;
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DSP_METERING_INFO
+        {
+            public int numsamples;
+            public IntPtr peaklevel;
+            public IntPtr rmslevel;
+            public int numChannels;
         }
 
         public struct System
@@ -347,6 +447,43 @@ namespace Tayx.Graphy.Fmod
             {
                 return FMOD_System_ResetFileUsage(handle);
             }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_System_GetMasterChannelGroup(IntPtr system, out IntPtr channelgroup);
+            
+            public RESULT getMasterChannelGroup(out ChannelGroup channelgroup)
+            {
+                IntPtr groupHandle;
+                RESULT result = FMOD_System_GetMasterChannelGroup(handle, out groupHandle);
+                channelgroup = new ChannelGroup(groupHandle);
+                return result;
+            }
+        }
+        
+        public struct ChannelGroup
+        {
+            public IntPtr handle;
+            
+            public ChannelGroup(IntPtr ptr)
+            {
+                handle = ptr;
+            }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_ChannelGroup_SetMeteringEnabled(IntPtr channelgroup, bool inputEnabled, bool outputEnabled);
+            
+            public RESULT setMeteringEnabled(bool inputEnabled, bool outputEnabled)
+            {
+                return FMOD_ChannelGroup_SetMeteringEnabled(handle, inputEnabled, outputEnabled);
+            }
+            
+            [DllImport("fmod")]
+            private static extern RESULT FMOD_ChannelGroup_GetMeteringInfo(IntPtr channelgroup, IntPtr inputInfo, out DSP_METERING_INFO outputInfo);
+            
+            public RESULT getMeteringInfo(out DSP_METERING_INFO outputInfo)
+            {
+                return FMOD_ChannelGroup_GetMeteringInfo(handle, IntPtr.Zero, out outputInfo);
+            }
         }
 
         public static class Memory
@@ -363,3 +500,5 @@ namespace Tayx.Graphy.Fmod
 
     #endregion
 }
+
+#endif // GRAPHY_FMOD || UNITY_EDITOR

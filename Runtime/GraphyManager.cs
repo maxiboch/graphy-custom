@@ -18,6 +18,10 @@ using UnityEngine;
 using Tayx.Graphy.Audio;
 #endif // GRAPHY_BUILTIN_AUDIO
 
+#if GRAPHY_FMOD
+using Tayx.Graphy.Fmod;
+#endif // GRAPHY_FMOD
+
 using Tayx.Graphy.Fps;
 using Tayx.Graphy.Ram;
 using Tayx.Graphy.Utils;
@@ -52,7 +56,8 @@ namespace Tayx.Graphy
             FPS = 0,
             RAM = 1,
             AUDIO = 2,
-            ADVANCED = 3
+            ADVANCED = 3,
+            FMOD = 4
         }
 
         public enum ModuleState
@@ -192,6 +197,16 @@ namespace Tayx.Graphy
         private int m_spectrumSize = 512;
 #endif // GRAPHY_BUILTIN_AUDIO
 
+#if GRAPHY_FMOD
+        // FMOD --------------------------------------------------------------------------
+
+        [SerializeField] private ModuleState m_fmodModuleState = ModuleState.OFF;
+        
+        [Range( 10, 300 )] [SerializeField] private int m_fmodGraphResolution = 150;
+        
+        [Range( 1, 200 )] [SerializeField] private int m_fmodTextUpdateRate = 3; // 3 updates per sec.
+#endif // GRAPHY_FMOD
+
         // Advanced ----------------------------------------------------------------------
 
         [SerializeField] private ModulePosition m_advancedModulePosition = ModulePosition.BOTTOM_LEFT;
@@ -213,6 +228,9 @@ namespace Tayx.Graphy
 #if GRAPHY_BUILTIN_AUDIO
         private G_AudioManager m_audioManager = null;
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+        private G_FmodManager m_fmodManager = null;
+#endif // GRAPHY_FMOD
         private G_AdvancedData m_advancedData = null;
 
         private G_FpsMonitor m_fpsMonitor = null;
@@ -220,6 +238,9 @@ namespace Tayx.Graphy
 #if GRAPHY_BUILTIN_AUDIO
         private G_AudioMonitor m_audioMonitor = null;
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+        private G_FmodMonitor m_fmodMonitor = null;
+#endif // GRAPHY_FMOD
 
         private ModulePreset m_modulePresetState = ModulePreset.FPS_BASIC_ADVANCED_FULL;
 
@@ -537,6 +558,43 @@ namespace Tayx.Graphy
 
 #endif // GRAPHY_BUILTIN_AUDIO
 
+#if GRAPHY_FMOD
+        // FMOD --------------------------------------------------------------------------
+        
+        public ModuleState FmodModuleState
+        {
+            get => m_fmodModuleState;
+            set
+            {
+                m_fmodModuleState = value;
+                if (m_fmodManager != null)
+                    m_fmodManager.SetState(m_fmodModuleState);
+            }
+        }
+        
+        public int FmodGraphResolution
+        {
+            get => m_fmodGraphResolution;
+            set
+            {
+                m_fmodGraphResolution = value;
+                if (m_fmodManager != null)
+                    m_fmodManager.UpdateParameters();
+            }
+        }
+        
+        public float FmodTextUpdateRate
+        {
+            get => 1f / m_fmodTextUpdateRate;
+            set
+            {
+                m_fmodTextUpdateRate = Mathf.RoundToInt(1f / value);
+                if (m_fmodManager != null)
+                    m_fmodManager.UpdateParameters();
+            }
+        }
+#endif // GRAPHY_FMOD
+
         // Advanced ---------------------------------------------------------------------
 
         // Setters & Getters
@@ -607,6 +665,7 @@ namespace Tayx.Graphy
                 case ModuleType.FPS:
                 case ModuleType.RAM:
                 case ModuleType.AUDIO:
+                case ModuleType.FMOD:
                     m_graphModulePosition = modulePosition;
 
                     m_ramManager.SetPosition( modulePosition, m_graphModuleOffset );
@@ -615,6 +674,10 @@ namespace Tayx.Graphy
 #if GRAPHY_BUILTIN_AUDIO
                     m_audioManager.SetPosition( modulePosition, m_graphModuleOffset );
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+                    if (m_fmodManager != null)
+                        m_fmodManager.SetPosition( modulePosition, m_graphModuleOffset );
+#endif // GRAPHY_FMOD
 
                     break;
 
@@ -805,6 +868,10 @@ namespace Tayx.Graphy
 #if GRAPHY_BUILTIN_AUDIO
                     m_audioManager.RestorePreviousState();
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+                    if (m_fmodManager != null)
+                        m_fmodManager.RestorePreviousState();
+#endif // GRAPHY_FMOD
                     m_advancedData.RestorePreviousState();
 
                     m_active = true;
@@ -825,6 +892,10 @@ namespace Tayx.Graphy
 #if GRAPHY_BUILTIN_AUDIO
                 m_audioManager.SetState( ModuleState.OFF );
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+                if (m_fmodManager != null)
+                    m_fmodManager.SetState( ModuleState.OFF );
+#endif // GRAPHY_FMOD
                 m_advancedData.SetState( ModuleState.OFF );
 
                 m_active = false;
@@ -847,6 +918,9 @@ namespace Tayx.Graphy
 #if GRAPHY_BUILTIN_AUDIO
             m_audioMonitor = GetComponentInChildren<G_AudioMonitor>( true );
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+            m_fmodMonitor = GetComponentInChildren<G_FmodMonitor>( true );
+#endif // GRAPHY_FMOD
 
             m_fpsManager = GetComponentInChildren<G_FpsManager>( true );
             m_ramManager = GetComponentInChildren<G_RamManager>( true );
@@ -865,6 +939,14 @@ namespace Tayx.Graphy
             m_audioManager.SetPosition( m_graphModulePosition, m_graphModuleOffset );
             m_audioManager.SetState( m_audioModuleState );
 #endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+            m_fmodManager = GetComponentInChildren<G_FmodManager>( true );
+            if (m_fmodManager != null)
+            {
+                m_fmodManager.SetPosition( m_graphModulePosition, m_graphModuleOffset );
+                m_fmodManager.SetState( m_fmodModuleState );
+            }
+#endif // GRAPHY_FMOD
 
             if( !m_enableOnStartup )
             {

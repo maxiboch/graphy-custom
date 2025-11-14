@@ -25,6 +25,11 @@
             "name": "com.unity.modules.audio",
             "expression": "",
             "define": "GRAPHY_BUILTIN_AUDIO"
+        },
+        {
+            "name": "FMODUnity",
+            "expression": "",
+            "define": "GRAPHY_FMOD"
         }
     ],
     "noEngineReferences": false
