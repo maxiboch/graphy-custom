@@ -1,8 +1,36 @@
-# Graphy - Ultimate FPS Counter - Stats Monitor & Debugger (Unity)
+# Graphy Custom - Enhanced Performance Monitor for Unity
 
-This is the same as the main version of Graphy here: https://github.com/Tayx94/graphy but with the FPS block displaying ms/f instead of fps, and the cpu and gpu times recorded separately. This only works on platforms that support CaptureFrameTimings() and the feature must be enabled in the player settings.
+**This is a custom fork of [Graphy](https://github.com/Tayx94/graphy) that integrates multiple open pull requests and additional enhancements.**
 
-(I also changed the way the average, 1%, and 0.1% values are computed - which uses a numerically stable calculation of the variance.)
+## What's Different in This Fork?
+
+This custom version combines the best of several community contributions:
+
+### Integrated Pull Requests from Upstream:
+- **[PR #121](https://github.com/Tayx94/graphy/pull/121)**: Conditional audio module - allows toggling the audio module on/off
+- **[PR #124](https://github.com/Tayx94/graphy/pull/124)**: Fix to prevent IndexOutOfRangeException
+- **[PR #123](https://github.com/Tayx94/graphy/pull/123)**: Reset FPS monitor functionality
+- **[PR #122](https://github.com/Tayx94/graphy/pull/122)**: **Double-ended queue implementation** for faster percentile updates (O(n) operation where n is 1% of sample buffer)
+
+### CPU & GPU Tracking from paulatwarp:
+Integrated CPU and GPU tracking features from [paulatwarp's fork](https://github.com/paulatwarp/graphy) (commits 82c8cca and 227173d):
+- **Separate CPU and GPU time tracking** with millisecond precision
+- **ms/f display** instead of FPS for more precise frame timing analysis
+- Works on platforms that support `CaptureFrameTimings()` (must be enabled in player settings)
+- Numerically stable variance calculation for percentiles
+
+### Important Technical Choice:
+- **Uses double-ended queue (deque) from PR #122** instead of ring buffer implementations
+- Ring buffer commits (885fe85 and 518ee59) were explicitly **excluded** in favor of the more efficient deque implementation
+
+## Credits
+
+This fork wouldn't exist without the contributions from:
+- **Martin Pane ([@martinTayx](https://github.com/Tayx94))** - Original Graphy creator
+- **[Paul Sinnett](https://github.com/paulsinnett)** - Double-ended queue implementation, reset functionality, bug fixes
+- **[paulatwarp](https://github.com/paulatwarp)** - CPU/GPU tracking and ms/f display
+- **[FurkanKambay](https://github.com/FurkanKambay)** - Conditional audio module
+- All other [Graphy contributors](https://github.com/Tayx94/graphy/graphs/contributors)
 
 [![openupm](https://img.shields.io/npm/v/com.tayx.graphy?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.tayx.graphy/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/Tayx94/graphy/blob/master/LICENSE)
