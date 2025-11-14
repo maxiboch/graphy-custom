@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using Tayx.Graphy;
 using Tayx.Graphy.UI;
 using Tayx.Graphy.Utils;
 

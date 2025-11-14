@@ -212,19 +212,20 @@ namespace Tayx.Graphy.Fmod
                         var studioSystemObj = studioSystemProp.GetValue(null, null);
                         if (studioSystemObj != null)
                         {
-                            FMOD.Studio.System studioSystem = (FMOD.Studio.System)studioSystemObj;
+                            // Use dynamic to avoid namespace conflicts
+                            dynamic studioSystem = studioSystemObj;
                             if (studioSystem.isValid())
                             {
-                                FMOD.System coreSystem;
+                                dynamic coreSystem;
                                 var result = studioSystem.getCoreSystem(out coreSystem);
-                                if (result == FMOD.RESULT.OK && coreSystem.hasHandle())
+                                if (result.ToString() == "OK" && coreSystem.hasHandle())
                                 {
                                     m_fmodSystem = coreSystem.handle;
                                     
                                     // Get master channel group for audio metering
-                                    FMOD.ChannelGroup masterGroup;
+                                    dynamic masterGroup;
                                     result = coreSystem.getMasterChannelGroup(out masterGroup);
-                                    if (result == FMOD.RESULT.OK)
+                                    if (result.ToString() == "OK")
                                     {
                                         m_masterChannelGroup = masterGroup.handle;
                                     }

@@ -15,6 +15,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using Tayx.Graphy;
 using Tayx.Graphy.Graph;
 
 namespace Tayx.Graphy.Fmod
