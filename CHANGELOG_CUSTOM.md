@@ -1,5 +1,27 @@
 # Changelog - Graphy Custom Fork
 
+## [v0.2.0-custom] - 2025-11-14
+
+### Added
+- **FMOD Audio System Monitoring Module**
+  - Real-time FMOD CPU usage tracking (DSP, streaming, geometry, update, Studio)
+  - Memory allocation monitoring with current and peak values
+  - Active audio channels counter
+  - File I/O throughput monitoring (KB/s)
+  - GC-free implementation using double-ended queues
+  - Automatic FMOD system detection and connection
+  - Visual graphs for CPU, memory, and channel usage
+  - Text displays with current, average, and peak values
+  - Color-coded performance thresholds
+  - Works without FMOD profiling enabled
+
+### Technical Implementation
+- Uses native FMOD API calls via P/Invoke for minimal overhead
+- Pre-allocated buffers to avoid runtime allocations
+- Leverages existing Graphy double-ended queue for sample storage
+- Update rate control to minimize performance impact
+- Graceful fallback when FMOD is not available
+
 ## [v0.1.0-custom] - 2025-11-14
 
 ### Summary

@@ -23,6 +23,26 @@ Integrated CPU and GPU tracking features from [paulatwarp's fork](https://github
 - **Uses double-ended queue (deque) from PR #122** instead of ring buffer implementations
 - Ring buffer commits (885fe85 and 518ee59) were explicitly **excluded** in favor of the more efficient deque implementation
 
+### NEW: FMOD Audio System Monitoring
+This fork includes a custom FMOD monitoring module that tracks:
+- **FMOD CPU Usage**: DSP, streaming, geometry, update, and Studio CPU percentages
+- **FMOD Memory**: Current and peak memory allocation in MB
+- **Active Channels**: Number of channels currently playing
+- **File I/O**: Stream and sample bytes read per second
+
+#### FMOD Module Features:
+- GC-free implementation using pre-allocated buffers and double-ended queues
+- Automatic FMOD system detection (works with FMOD for Unity)
+- Real-time graphs for CPU, memory, and channel usage
+- Color-coded thresholds for performance warnings
+- Current, average, and peak value tracking
+- Works even when FMOD profiling is disabled
+
+#### FMOD Module Requirements:
+- FMOD for Unity must be installed in your project
+- Works with FMOD Studio API 2.0+
+- Automatically detects and connects to FMOD runtime
+
 ## Credits
 
 This fork wouldn't exist without the contributions from:
