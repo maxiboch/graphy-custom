@@ -201,8 +201,15 @@ namespace Tayx.Graphy.Fmod
 
             try
             {
-                // Try to get FMOD system instance directly
-                // This uses reflection to access FMODUnity if available
+                // First try to detect if FMOD types exist globally
+                var fmodVersionType = System.Type.GetType("FMOD.VERSION");
+                if (fmodVersionType != null)
+                {
+                    Debug.Log("[Graphy] FMOD types detected directly");
+                }
+                
+                // Try multiple approaches to get FMOD system
+                // Approach 1: Try FMODUnity.RuntimeManager (FMOD for Unity)
                 var fmodUnityType = System.Type.GetType("FMODUnity.RuntimeManager, FMODUnity");
                 if (fmodUnityType != null)
                 {
@@ -240,6 +247,57 @@ namespace Tayx.Graphy.Fmod
                                     Debug.Log("[Graphy] FMOD monitoring initialized successfully");
                                 }
                             }
+                        }
+                    }
+                }
+                
+                // Approach 2: Try RuntimeManager.CoreSystem (alternate FMOD Unity integration)
+                if (!m_isInitialized)
+                {
+                    var coreSystemProp = fmodUnityType?.GetProperty("CoreSystem");
+                    if (coreSystemProp != null)
+                    {
+                        var coreSystemObj = coreSystemProp.GetValue(null, null);
+                        if (coreSystemObj != null)
+                        {
+                            dynamic coreSystem = coreSystemObj;
+                            var handleProp = coreSystemObj.GetType().GetProperty("handle");
+                            if (handleProp != null)
+                            {
+                                m_fmodSystem = (IntPtr)handleProp.GetValue(coreSystemObj, null);
+                                if (m_fmodSystem != IntPtr.Zero)
+                                {
+                                    Debug.Log("[Graphy] FMOD monitoring initialized via CoreSystem");
+                                    m_isInitialized = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Approach 3: Try to find FMOD system through assembly scanning
+                if (!m_isInitialized)
+                {
+                    // Look for any type in FMOD namespace
+                    var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
+                    foreach (var assembly in assemblies)
+                    {
+                        try
+                        {
+                            var types = assembly.GetTypes();
+                            foreach (var type in types)
+                            {
+                                if (type.Namespace != null && type.Namespace.StartsWith("FMOD"))
+                                {
+                                    Debug.Log($"[Graphy] Found FMOD type: {type.FullName} in assembly {assembly.GetName().Name}");
+                                    // We found FMOD, but might not have a system reference yet
+                                    break;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // Skip assemblies we can't access
                         }
                     }
                 }
