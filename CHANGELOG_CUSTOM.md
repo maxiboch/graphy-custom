@@ -1,5 +1,36 @@
 # Changelog - Graphy Custom Fork
 
+## [v0.3.0-custom] - 2025-11-14
+
+### Enhanced FMOD Integration
+- **Compile Directive Support**
+  - Added `GRAPHY_FMOD` compile directive to assembly definitions
+  - Module only compiles when FMOD for Unity is present
+  - Follows same pattern as PR #121's audio module conditional compilation
+  - Works in both Runtime and Editor assemblies
+
+- **Audio Level Metering**
+  - Real-time RMS level monitoring for left/right channels
+  - Peak level detection with automatic dB conversion (-80dB to 0dB range)
+  - Master channel group output metering via FMOD Core API
+  - Supports both mono and stereo configurations
+  - Current, average, and peak value tracking per channel
+
+- **Full GraphyManager Integration**
+  - FMOD module properties exposed in GraphyManager
+  - State management (OFF/TEXT/BASIC/FULL modes)
+  - Position management alongside other modules
+  - Enable/Disable/RestorePreviousState functionality
+  - Configurable graph resolution and text update rates
+  - Automatic initialization when FMOD Core System is detected
+
+- **Enhanced Core API Usage**
+  - `System::getMasterChannelGroup()` for audio output access
+  - `ChannelGroup::setMeteringEnabled()` to enable level monitoring
+  - `ChannelGroup::getMeteringInfo()` for RMS/peak data retrieval
+  - Works with FMOD Core System (not just Studio)
+  - No FMOD profiling flag required
+
 ## [v0.2.0-custom] - 2025-11-14
 
 ### Added

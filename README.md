@@ -23,25 +23,30 @@ Integrated CPU and GPU tracking features from [paulatwarp's fork](https://github
 - **Uses double-ended queue (deque) from PR #122** instead of ring buffer implementations
 - Ring buffer commits (885fe85 and 518ee59) were explicitly **excluded** in favor of the more efficient deque implementation
 
-### NEW: FMOD Audio System Monitoring
-This fork includes a custom FMOD monitoring module that tracks:
+### NEW: FMOD Audio System Monitoring (v0.3.0)
+This fork includes a comprehensive FMOD monitoring module that tracks:
 - **FMOD CPU Usage**: DSP, streaming, geometry, update, and Studio CPU percentages
 - **FMOD Memory**: Current and peak memory allocation in MB
 - **Active Channels**: Number of channels currently playing
 - **File I/O**: Stream and sample bytes read per second
+- **Audio Level Metering**: Real-time RMS and peak levels for L/R channels in dB
 
 #### FMOD Module Features:
-- GC-free implementation using pre-allocated buffers and double-ended queues
-- Automatic FMOD system detection (works with FMOD for Unity)
-- Real-time graphs for CPU, memory, and channel usage
-- Color-coded thresholds for performance warnings
-- Current, average, and peak value tracking
-- Works even when FMOD profiling is disabled
+- **Conditional Compilation**: Uses `GRAPHY_FMOD` directive, only compiles when FMOD is present
+- **Audio Metering**: Real-time RMS/peak level monitoring via master channel group
+- **Full Integration**: Complete GraphyManager integration with state management
+- **GC-free Design**: Pre-allocated buffers and double-ended queues
+- **Automatic Detection**: Works with FMOD Core System (not just Studio)
+- **No Profiling Required**: Uses Core API functions, no FMOD profiling flag needed
+- **Visual Graphs**: CPU, memory, channels, and audio level visualization
+- **Color-coded Thresholds**: Performance warnings for all metrics
+- **Comprehensive Tracking**: Current, average, and peak values for all metrics
 
 #### FMOD Module Requirements:
-- FMOD for Unity must be installed in your project
-- Works with FMOD Studio API 2.0+
-- Automatically detects and connects to FMOD runtime
+- FMOD for Unity package installed in project
+- Works with FMOD Core API 2.0+
+- Automatically detects FMOD Core System at runtime
+- No special FMOD configuration required
 
 ## Credits
 
