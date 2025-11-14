@@ -10,9 +10,7 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "defines": [
-        "GRAPHY_FMOD"
-    ],
+    "defines": [],
     "versionDefines": [
         {
             "name": "com.unity.inputsystem",
@@ -28,11 +26,6 @@
             "name": "com.unity.modules.audio",
             "expression": "",
             "define": "GRAPHY_BUILTIN_AUDIO"
-        },
-        {
-            "name": "com.fmod",
-            "expression": "",
-            "define": "GRAPHY_FMOD"
         }
     ],
     "noEngineReferences": false
