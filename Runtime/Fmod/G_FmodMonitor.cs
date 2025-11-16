@@ -30,7 +30,8 @@ namespace Tayx.Graphy.Fmod
         private IntPtr m_fmodSystem = IntPtr.Zero;
         private IntPtr m_masterChannelGroup = IntPtr.Zero;
         private bool m_isInitialized = false;
-        private bool m_initializationAttempted = false;
+        private float m_timeSinceLastInitAttempt = 0f;
+        private const float INIT_RETRY_INTERVAL = 1f; // Retry every 1 second until successful
 
         // Pre-allocated buffers for GC-free operation
         private G_DoubleEndedQueue m_cpuSamples;
@@ -153,8 +154,13 @@ namespace Tayx.Graphy.Fmod
         {
             if (!m_isInitialized || m_fmodSystem == IntPtr.Zero)
             {
-                // Try to initialize if not ready
-                TryInitializeFmod();
+                // Try to initialize if not ready, but throttle attempts
+                m_timeSinceLastInitAttempt += Time.unscaledDeltaTime;
+                if (m_timeSinceLastInitAttempt >= INIT_RETRY_INTERVAL)
+                {
+                    m_timeSinceLastInitAttempt = 0f;
+                    TryInitializeFmod();
+                }
                 return;
             }
 
@@ -240,18 +246,10 @@ namespace Tayx.Graphy.Fmod
 
         private void TryInitializeFmod()
         {
-            if (m_isInitialized || m_initializationAttempted) return;
-
-            m_initializationAttempted = true;
+            if (m_isInitialized) return;
 
             try
             {
-                // First try to detect if FMOD types exist globally
-                var fmodVersionType = System.Type.GetType("FMOD.VERSION");
-                if (fmodVersionType != null)
-                {
-                    Debug.Log("[Graphy] FMOD types detected directly");
-                }
                 
                 // Try multiple approaches to get FMOD system
                 // Approach 1: Try custom Player class (for custom FMOD implementations)
@@ -369,42 +367,8 @@ namespace Tayx.Graphy.Fmod
                     }
                 }
 
-                // Approach 4: Try to find FMOD system through assembly scanning
-                if (!m_isInitialized)
-                {
-                    // Look for any type in FMOD namespace
-                    var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
-                    bool fmodFound = false;
-                    foreach (var assembly in assemblies)
-                    {
-                        try
-                        {
-                            var types = assembly.GetTypes();
-                            foreach (var type in types)
-                            {
-                                if (type.Namespace != null && type.Namespace.StartsWith("FMOD"))
-                                {
-                                    fmodFound = true;
-                                    break;
-                                }
-                            }
-                            if (fmodFound) break;
-                        }
-                        catch
-                        {
-                            // Skip assemblies we can't access
-                        }
-                    }
-
-                    if (fmodFound)
-                    {
-                        Debug.LogWarning("[Graphy] FMOD types found but could not initialize FMOD monitoring. FMOD system may not be initialized yet.");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[Graphy] FMOD not detected. FMOD monitoring will be unavailable.");
-                    }
-                }
+                // Approach 4: FMOD not found - will keep retrying silently
+                // No warning needed here since we retry every second until successful
             }
             catch (Exception e)
             {
