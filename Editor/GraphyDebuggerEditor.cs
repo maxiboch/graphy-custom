@@ -537,6 +537,22 @@ namespace Tayx.Graphy
                     return "FPS Max";
                 case GraphyDebugger.DebugVariable.Fps_Avg:
                     return "FPS Avg";
+                case GraphyDebugger.DebugVariable.Cpu:
+                    return "CPU Current";
+                case GraphyDebugger.DebugVariable.Cpu_Min:
+                    return "CPU Min";
+                case GraphyDebugger.DebugVariable.Cpu_Max:
+                    return "CPU Max";
+                case GraphyDebugger.DebugVariable.Cpu_Avg:
+                    return "CPU Avg";
+                case GraphyDebugger.DebugVariable.Gpu:
+                    return "GPU Current";
+                case GraphyDebugger.DebugVariable.Gpu_Min:
+                    return "GPU Min";
+                case GraphyDebugger.DebugVariable.Gpu_Max:
+                    return "GPU Max";
+                case GraphyDebugger.DebugVariable.Gpu_Avg:
+                    return "GPU Avg";
 
                 case GraphyDebugger.DebugVariable.Ram_Allocated:
                     return "Ram Allocated";
@@ -545,10 +561,40 @@ namespace Tayx.Graphy
                 case GraphyDebugger.DebugVariable.Ram_Mono:
                     return "Ram Mono";
 
-#if GRAPHY_BUILTIN_AUDIO
-                case GraphyDebugger.DebugVariable.Audio_DB:
-                    return "Audio DB";
-#endif // GRAPHY_BUILTIN_AUDIO
+#if GRAPHY_FMOD
+                case GraphyDebugger.DebugVariable.Fmod_Cpu:
+                    return "FMOD CPU Current";
+                case GraphyDebugger.DebugVariable.Fmod_Cpu_Avg:
+                    return "FMOD CPU Avg";
+                case GraphyDebugger.DebugVariable.Fmod_Cpu_Peak:
+                    return "FMOD CPU Peak";
+                case GraphyDebugger.DebugVariable.Fmod_Memory:
+                    return "FMOD Memory Current";
+                case GraphyDebugger.DebugVariable.Fmod_Memory_Avg:
+                    return "FMOD Memory Avg";
+                case GraphyDebugger.DebugVariable.Fmod_Memory_Peak:
+                    return "FMOD Memory Peak";
+                case GraphyDebugger.DebugVariable.Fmod_Channels:
+                    return "FMOD Channels Current";
+                case GraphyDebugger.DebugVariable.Fmod_Channels_Avg:
+                    return "FMOD Channels Avg";
+                case GraphyDebugger.DebugVariable.Fmod_Channels_Peak:
+                    return "FMOD Channels Peak";
+                case GraphyDebugger.DebugVariable.Fmod_FileIO:
+                    return "FMOD File I/O Current";
+                case GraphyDebugger.DebugVariable.Fmod_FileIO_Avg:
+                    return "FMOD File I/O Avg";
+                case GraphyDebugger.DebugVariable.Fmod_FileIO_Peak:
+                    return "FMOD File I/O Peak";
+                case GraphyDebugger.DebugVariable.Fmod_Audio_RMS_Left:
+                    return "FMOD Audio RMS Left";
+                case GraphyDebugger.DebugVariable.Fmod_Audio_RMS_Right:
+                    return "FMOD Audio RMS Right";
+                case GraphyDebugger.DebugVariable.Fmod_Audio_Peak_Left:
+                    return "FMOD Audio Peak Left";
+                case GraphyDebugger.DebugVariable.Fmod_Audio_Peak_Right:
+                    return "FMOD Audio Peak Right";
+#endif // GRAPHY_FMOD
 
                 default:
                     return null;
