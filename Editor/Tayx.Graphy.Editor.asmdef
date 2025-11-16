@@ -12,17 +12,14 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "defines": [],
+    "defines": [
+        "GRAPHY_FMOD"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.inputsystem",
             "expression": "",
             "define": "GRAPHY_NEW_INPUT"
-        },
-        {
-            "name": "com.unity.modules.audio",
-            "expression": "",
-            "define": "GRAPHY_BUILTIN_AUDIO"
         }
     ],
     "noEngineReferences": false
